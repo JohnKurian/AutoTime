@@ -1,0 +1,7 @@
+/notebooks/.ipynb_checkpoints/
+/notebooks/lightning_logs/
+/ES-RNN-Pytorch/.ipynb_checkpoints/
+/datasets/
+/data/
+/notebooks/lr_find_temp.ckpt
+/notebooks/daily-min-temps.csv
