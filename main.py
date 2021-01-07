@@ -6,7 +6,7 @@ import hiplot as hip
 import os
 
 from machine_learning  import rf_regression, kn_regression, theta_forecaster
-from lstm import lstm_model
+from lstm import lstm_model, multivariate_lstm_model
 from nbeats_model import nbeats_model
 from temporal_convolutional_network  import temporal_convolutional_network
 
@@ -51,7 +51,7 @@ def initiate_run():
     from hyperopt import fmin, tpe, hp, Trials
     import pickle
 
-    global selected_algos
+    global selected_algos, mode
 
     algo_space_map = {
         'TCN': {'algo': 'tcn',
@@ -126,6 +126,7 @@ best_r2 = -9999
 def run_pipeline(cfg):
     global best_r2
     global chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon
+    global mode, selected_features
     print('#####', cfg)
 
 
@@ -138,19 +139,24 @@ def run_pipeline(cfg):
     y_pred = []
 
 
+    if mode == 'univariate':
+        if cfg['algo'] == 'sk_random_forest':
+            r2, rmse, y_test, y_pred = rf_regression(dataset_location, predictor, forecasting_horizon, cfg)
+        elif cfg['algo'] == 'sk_knn':
+            r2, rmse, y_test, y_pred = kn_regression(dataset_location, predictor, forecasting_horizon, cfg)
+        elif cfg['algo'] == 'theta_forecaster':
+            r2, rmse, y_test, y_pred = theta_forecaster(dataset_location, predictor, forecasting_horizon, cfg)
+        elif cfg['algo'] == 'lstm':
+            r2, rmse, y_test, y_pred = lstm_model(dataset_location, predictor, forecasting_horizon, cfg)
+        elif cfg['algo'] == 'tcn':
+            r2, rmse, y_test, y_pred = temporal_convolutional_network(dataset_location, predictor, forecasting_horizon, cfg)
+        elif cfg['algo'] == 'nbeats':
+            r2, rmse, y_test, y_pred = nbeats_model(dataset_location, predictor, forecasting_horizon, cfg)
 
-    if cfg['algo'] == 'sk_random_forest':
-        r2, rmse, y_test, y_pred = rf_regression(dataset_location, predictor, forecasting_horizon, cfg)
-    elif cfg['algo'] == 'sk_knn':
-        r2, rmse, y_test, y_pred = kn_regression(dataset_location, predictor, forecasting_horizon, cfg)
-    elif cfg['algo'] == 'theta_forecaster':
-        r2, rmse, y_test, y_pred = theta_forecaster(dataset_location, predictor, forecasting_horizon, cfg)
-    elif cfg['algo'] == 'lstm':
-        r2, rmse, y_test, y_pred = lstm_model(dataset_location, predictor, forecasting_horizon, cfg)
-    elif cfg['algo'] == 'tcn':
-        r2, rmse, y_test, y_pred = temporal_convolutional_network(dataset_location, predictor, forecasting_horizon, cfg)
-    elif cfg['algo'] == 'nbeats':
-        r2, rmse, y_test, y_pred = nbeats_model(dataset_location, predictor, forecasting_horizon, cfg)
+    else:
+        if cfg['algo'] == 'lstm':
+            r2, rmse, y_test, y_pred = multivariate_lstm_model(dataset_location, predictor, selected_features, forecasting_horizon, cfg)
+
 
     print('here:', r2)
 
@@ -208,10 +214,29 @@ mode = st.selectbox(
 
 st.write('You selected:', mode)
 
+
+
+if mode == 'multivariate':
+    available_algos = ['LSTM']
+else:
+    available_algos = ['TCN', 'LSTM', 'Sktime-RandomForest', 'Sktime-KNN', 'Sktime-ThetaForecaster', 'NBeats']
+
+
+if mode == 'multivariate':
+    available_features = list(dataframe.columns)
+    available_features.remove(predictor)
+
+    selected_features = st.multiselect(
+        'Selected features',
+         available_features,
+         available_features)
+
+
+
 selected_algos = st.multiselect(
     'Selected algorithms',
-     ['TCN', 'LSTM', 'Sktime-RandomForest', 'Sktime-KNN', 'Sktime-ThetaForecaster', 'NBeats'],
-     ['TCN', 'LSTM'])
+     available_algos,
+     ['LSTM'])
 
 if predictor:
     st.line_chart(dataframe[predictor])
