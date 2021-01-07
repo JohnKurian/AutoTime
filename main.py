@@ -197,6 +197,19 @@ dataset_location = 'datasets/' +dataset
 st.write(dataframe)
 st.text('dataset has {} rows'.format(len(dataframe)))
 
+dataframe = dataframe.apply(lambda col: pd.to_datetime(col, errors='ignore')
+              if col.dtypes == object
+              else col,
+              axis=0)
+
+date_cols = [col for col in list(dataframe.columns) if (dataframe[col].dtype == np.dtype('datetime64[ns]'))]
+st.text('Date columns found: {}'.format(date_cols))
+
+date_index = st.selectbox(
+    'Pick the date index',
+    date_cols)
+
+
 forecasting_horizon = int(st.text_input("input the forecasting horizon", 49))
 
 
