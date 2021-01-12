@@ -5,3 +5,5 @@
 /data/
 /notebooks/lr_find_temp.ckpt
 /notebooks/daily-min-temps.csv
+/mlruns/*
+/debug.log

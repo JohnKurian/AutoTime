@@ -11,6 +11,10 @@ from lstm import lstm_model, multivariate_lstm_model
 from nbeats_model import nbeats_model
 from temporal_convolutional_network  import temporal_convolutional_network
 
+import SessionState
+
+from datetime import datetime
+
 results = {
     'best_r2': 0
 }
@@ -46,10 +50,18 @@ my_slot2 = st.empty()
 # hip.Experiment.from_iterable(data).display_st()
 
 
-def initiate_run(chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon, mode, selected_features, selected_algos):
+def initiate_run(exp_id, chart_data, chart, results, my_slot1, dataset_name, predictor, forecasting_horizon, mode, selected_features, selected_algos):
 
     import math
     from hyperopt import fmin, tpe, hp, Trials
+    # from hyperopt.mongoexp import MongoTrials
+    import os
+    # os.system('hyperopt-mongo-worker --mongo=root:7dc41992@cluster0-shard-00-02.vckj9.mongodb.net:27017/main --poll-interval=0.1 &')
+    # os.system('hyperopt-mongo-worker --mongo=localhost:27017/main --poll-interval=0.1 &')
+
+    # import subprocess
+    # subprocess.Popen('hyperopt-mongo-worker --mongo=localhost:27017/main --poll-interval=0.1 &', shell=True)
+
     import pickle
 
     # global selected_algos, mode
@@ -84,37 +96,38 @@ def initiate_run(chart_data, chart, results, my_slot1, dataset_location, predict
     }
 
 
-    trials = None
-    try:
-        print('loading from local..')
-        trials = pickle.load(open("trials.txt", "rb"))
-    except:
-        try:
-            print('loading from mlflow..')
-            from mlflow.tracking import MlflowClient
-
-            # Download artifacts
-            client = MlflowClient()
-            # print(run.info.run_id)
-            from mlflow.tracking.artifact_utils import _download_artifact_from_uri
-
-            # artifact_path = mlflow.get_artifact_uri() + '/trials.txt'
-            print('the artifact path:', artifact_path)
-            _download_artifact_from_uri(artifact_path, '.')
-            print('success')
-        except:
-            print('starting a new trial..')
-            trials = Trials()
-    Trials = None
+    # trials = None
+    # try:
+    #     print('loading from local..')
+    #     trials = pickle.load(open("trials.txt", "rb"))
+    # except:
+    #     try:
+    #         print('loading from mlflow..')
+    #         from mlflow.tracking import MlflowClient
+    #
+    #         # Download artifacts
+    #         client = MlflowClient()
+    #         # print(run.info.run_id)
+    #         from mlflow.tracking.artifact_utils import _download_artifact_from_uri
+    #
+    #         # artifact_path = mlflow.get_artifact_uri() + '/trials.txt'
+    #         print('the artifact path:', artifact_path)
+    #         _download_artifact_from_uri(artifact_path, '.')
+    #         print('success')
+    #     except:
+    #         print('starting a new trial..')
+    #         trials = Trials()
+    # Trials = None
 
     best = 0
 
     data =  {
+        'exp_id': exp_id,
         'chart_data': chart_data,
         'chart': chart,
         'results': results,
         'my_slot1': my_slot1,
-        'dataset_location': dataset_location,
+        'dataset_name': dataset_name,
         'predictor': predictor,
         'forecasting_horizon': forecasting_horizon,
         'mode': mode,
@@ -125,11 +138,17 @@ def initiate_run(chart_data, chart, results, my_slot1, dataset_location, predict
 
     fmin_objective = partial(run_pipeline, data=data)
 
-    if Trials:
-        print('here')
-        best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000, trials_save_file='trials.txt')
-    else:
-        best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000)
+    # trials = MongoTrials('mongodb://root:7dc41992@cluster0-shard-00-02.vckj9.mongodb.net:27017/main/jobs?retryWrites=true&w=majority', exp_key='trail1')
+    # trials = MongoTrials('mongo://localhost:27017/main/jobs', exp_key='trail1')
+
+    trials = Trials()
+    best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000)
+
+    # if Trials:
+    #     print('here')
+    #     best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000, trials_save_file='trials.txt')
+    # else:
+    #     best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000)
 
     # mlflow.get_artifact_uri()
     # mlflow.end_run()
@@ -145,12 +164,12 @@ def run_pipeline(cfg, data):
     print('cfg:', cfg)
     print('data:', data)
 
-
+    exp_id = data['exp_id']
     chart_data = data['chart_data']
     chart = data['chart']
     results = data['results']
     my_slot1 = data['my_slot1']
-    dataset_location = data['dataset_location']
+    dataset_name = data['dataset_name']
     predictor = data['predictor']
     forecasting_horizon = data['forecasting_horizon']
     mode = data['mode']
@@ -158,9 +177,8 @@ def run_pipeline(cfg, data):
 
 
 
-    x = input('press to continue')
     global best_r2
-    # global chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon
+    # global chart_data, chart, results, my_slot1, dataset_name, predictor, forecasting_horizon
     # global mode, selected_features
     print('#####', cfg)
 
@@ -176,21 +194,21 @@ def run_pipeline(cfg, data):
 
     if mode == 'univariate':
         if cfg['algo'] == 'sk_random_forest':
-            r2, rmse, y_test, y_pred = rf_regression(dataset_location, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = rf_regression(dataset_name, predictor, forecasting_horizon, cfg)
         elif cfg['algo'] == 'sk_knn':
-            r2, rmse, y_test, y_pred = kn_regression(dataset_location, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = kn_regression(dataset_name, predictor, forecasting_horizon, cfg)
         elif cfg['algo'] == 'theta_forecaster':
-            r2, rmse, y_test, y_pred = theta_forecaster(dataset_location, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = theta_forecaster(dataset_name, predictor, forecasting_horizon, cfg)
         elif cfg['algo'] == 'lstm':
-            r2, rmse, y_test, y_pred = lstm_model(dataset_location, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = lstm_model(dataset_name, predictor, forecasting_horizon, cfg)
         elif cfg['algo'] == 'tcn':
-            r2, rmse, y_test, y_pred = temporal_convolutional_network(dataset_location, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = temporal_convolutional_network(dataset_name, predictor, forecasting_horizon, cfg)
         elif cfg['algo'] == 'nbeats':
-            r2, rmse, y_test, y_pred = nbeats_model(dataset_location, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = nbeats_model(dataset_name, predictor, forecasting_horizon, cfg)
 
     else:
         if cfg['algo'] == 'lstm':
-            r2, rmse, y_test, y_pred = multivariate_lstm_model(dataset_location, predictor, selected_features, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = multivariate_lstm_model(dataset_name, predictor, selected_features, forecasting_horizon, cfg)
 
 
     print('here:', r2)
@@ -217,6 +235,20 @@ def run_pipeline(cfg, data):
     # mlflow.log_metric("r2", r2)
     # mlflow.log_artifact('trials.txt')
 
+    import pymongo
+
+    client = pymongo.MongoClient(
+        "mongodb+srv://root:7dc41992@cluster0.vckj9.mongodb.net/main?retryWrites=true&w=majority")
+
+    db = client.automl
+    db.runs.insert_one({'exp_id': exp_id,
+                        'config': cfg,
+                        'r2': r2,
+                        'rmse': rmse,
+                        'y_test': y_test.tolist(),
+                        'y_pred': y_pred.tolist(),
+                        'dataset_name': dataset_name,
+                        'created_at': datetime.utcnow()})
 
     return rmse
 
@@ -225,14 +257,67 @@ def run_pipeline(cfg, data):
 
 
 def run_ui():
+
+
+    import uuid, pymongo
+
+    session_state = SessionState.get(choices="",
+                                     choose_experiment='',
+                                     exp_id=None,
+                                     new_exp_name='',
+                                     button_sent=False)
+
+    client = pymongo.MongoClient(
+        "mongodb+srv://root:7dc41992@cluster0.vckj9.mongodb.net/main?retryWrites=true&w=majority")
+
+    db = client.automl
+
+    choices = ['create new experiment', 'choose from existing experiment']
+    choose_experiment = st.selectbox(
+        'Experiment selection',
+        choices)
+
+
+    if choose_experiment == 'create new experiment':
+        new_exp_name = st.text_input("experiment name", 'automl-exp')
+
+
+
+
+
+        if st.button('create'):
+            session_state.exp_id = str(uuid.uuid4())
+            db.experiments.insert_one({'exp_id': session_state.exp_id, 'exp_name': new_exp_name, 'created_at': datetime.utcnow()})
+            st.text('created exp id {}'.format(session_state.exp_id))
+
+
+    else:
+        exps = list(db.experiments.find({}, {'exp_id': 1, 'exp_name': 1}))
+
+        exp_strings = ['{}({})'.format(exp['exp_name'], exp['exp_id']) for exp in exps]
+
+        exp_map = dict(zip(exp_strings, exps))
+
+        selected_exp_string = st.selectbox(
+            'Pick the experiments',
+            exp_strings)
+
+        if selected_exp_string:
+            selected_exp = exp_map[selected_exp_string]
+            session_state.exp_id = selected_exp['exp_id']
+            st.text('the seleced experiment is {}'.format(session_state.exp_id))
+
+
+
     datasets = os.listdir('datasets')
     dataset = st.selectbox(
         'Pick the dataset',
         datasets)
     dataframe = pd.read_csv('datasets/' + dataset)
-    dataset_location = 'datasets/' +dataset
+    dataset_name = 'datasets/' +dataset
     st.write(dataframe)
     st.text('dataset has {} rows'.format(len(dataframe)))
+    print(session_state.exp_id)
 
     dataframe = dataframe.apply(lambda col: pd.to_datetime(col, errors='ignore')
                   if col.dtypes == object
@@ -293,11 +378,13 @@ def run_ui():
         st.line_chart(dataframe[predictor])
 
     if st.button('initiate automl'):
-        initiate_run(chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon, mode, selected_features, selected_algos)
+        initiate_run(session_state.exp_id, chart_data, chart, results, my_slot1, dataset_name, predictor, forecasting_horizon, mode, selected_features, selected_algos)
 
 
 run_ui()
 
+
+#https://www.thepolyglotdeveloper.com/2019/01/getting-started-mongodb-docker-container-deployment/
 
 
 

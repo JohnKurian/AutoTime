@@ -9,26 +9,26 @@ import pickle
 from sktime_models import rf_regression, kn_regression, theta_forecaster
 
 
-#mlflow stuff
-import mlflow
-# import mlflow.tensorflow
-mlflow.set_tracking_uri("http://sim-mlflow.kn.crc.de.abb.com") # this is optional - if you don't specify, all mlflow runs will be logged locally
-# mlflow.keras.autolog()# this automatically logs data relevant for your model e.g. hyperparameters, evaluation metrics
-mlflow.set_experiment("john_temp_run_sktime")
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-os.environ['AWS_SECRET_ACCESS_KEY'] = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-os.environ['AWS_ACCESS_KEY_ID'] = "AKIAIOSFODNN7EXAMPLE"
-os.environ['MLFLOW_S3_ENDPOINT_URL']='http://sim-store.kn.crc.de.abb.com'
-
-#start mlflow
-# run = mlflow.start_run(run_id='dd4a2fcda08649fcbb5b14450c831a60')
-run = mlflow.start_run()
-
-currentdir = os.path.dirname(os.path.abspath(
-    inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
+# #mlflow stuff
+# import mlflow
+# # import mlflow.tensorflow
+# mlflow.set_tracking_uri("http://sim-mlflow.kn.crc.de.abb.com") # this is optional - if you don't specify, all mlflow runs will be logged locally
+# # mlflow.keras.autolog()# this automatically logs data relevant for your model e.g. hyperparameters, evaluation metrics
+# mlflow.set_experiment("john_temp_run_sktime")
+# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+# os.environ['AWS_SECRET_ACCESS_KEY'] = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+# os.environ['AWS_ACCESS_KEY_ID'] = "AKIAIOSFODNN7EXAMPLE"
+# os.environ['MLFLOW_S3_ENDPOINT_URL']='http://sim-store.kn.crc.de.abb.com'
+#
+# #start mlflow
+# # run = mlflow.start_run(run_id='dd4a2fcda08649fcbb5b14450c831a60')
+# run = mlflow.start_run()
+#
+# currentdir = os.path.dirname(os.path.abspath(
+#     inspect.getfile(inspect.currentframe())))
+# parentdir = os.path.dirname(currentdir)
+# sys.path.insert(0, parentdir)
 
 
 
