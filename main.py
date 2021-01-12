@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import hiplot as hip
 import os
+from functools import partial
 
 from machine_learning  import rf_regression, kn_regression, theta_forecaster
 from lstm import lstm_model, multivariate_lstm_model
@@ -45,13 +46,13 @@ my_slot2 = st.empty()
 # hip.Experiment.from_iterable(data).display_st()
 
 
-def initiate_run():
+def initiate_run(chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon, mode, selected_features, selected_algos):
 
     import math
     from hyperopt import fmin, tpe, hp, Trials
     import pickle
 
-    global selected_algos, mode
+    # global selected_algos, mode
 
     algo_space_map = {
         'TCN': {'algo': 'tcn',
@@ -107,11 +108,28 @@ def initiate_run():
     Trials = None
 
     best = 0
+
+    data =  {
+        'chart_data': chart_data,
+        'chart': chart,
+        'results': results,
+        'my_slot1': my_slot1,
+        'dataset_location': dataset_location,
+        'predictor': predictor,
+        'forecasting_horizon': forecasting_horizon,
+        'mode': mode,
+        'selected_features': selected_features
+    }
+
+    # fmin_objective = partial(run_pipeline, chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon, mode, selected_features)
+
+    fmin_objective = partial(run_pipeline, data=data)
+
     if Trials:
         print('here')
-        best = fmin(run_pipeline, space, trials=trials, algo=tpe.suggest, max_evals=10000, trials_save_file='trials.txt')
+        best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000, trials_save_file='trials.txt')
     else:
-        best = fmin(run_pipeline, space, trials=trials, algo=tpe.suggest, max_evals=10000)
+        best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000)
 
     # mlflow.get_artifact_uri()
     # mlflow.end_run()
@@ -123,10 +141,27 @@ def initiate_run():
 
 best_r2 = -9999
 
-def run_pipeline(cfg):
+def run_pipeline(cfg, data):
+    print('cfg:', cfg)
+    print('data:', data)
+
+
+    chart_data = data['chart_data']
+    chart = data['chart']
+    results = data['results']
+    my_slot1 = data['my_slot1']
+    dataset_location = data['dataset_location']
+    predictor = data['predictor']
+    forecasting_horizon = data['forecasting_horizon']
+    mode = data['mode']
+    selected_features = data['selected_features']
+
+
+
+    x = input('press to continue')
     global best_r2
-    global chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon
-    global mode, selected_features
+    # global chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon
+    # global mode, selected_features
     print('#####', cfg)
 
 
@@ -188,75 +223,80 @@ def run_pipeline(cfg):
 # uploaded_file = st.file_uploader("Upload the dataset")
 
 
-datasets = os.listdir('datasets')
-dataset = st.selectbox(
-    'Pick the dataset',
-    datasets)
-dataframe = pd.read_csv('datasets/' + dataset)
-dataset_location = 'datasets/' +dataset
-st.write(dataframe)
-st.text('dataset has {} rows'.format(len(dataframe)))
 
-dataframe = dataframe.apply(lambda col: pd.to_datetime(col, errors='ignore')
-              if col.dtypes == object
-              else col,
-              axis=0)
+def run_ui():
+    datasets = os.listdir('datasets')
+    dataset = st.selectbox(
+        'Pick the dataset',
+        datasets)
+    dataframe = pd.read_csv('datasets/' + dataset)
+    dataset_location = 'datasets/' +dataset
+    st.write(dataframe)
+    st.text('dataset has {} rows'.format(len(dataframe)))
 
-date_cols = [col for col in list(dataframe.columns) if (dataframe[col].dtype == np.dtype('datetime64[ns]'))]
-st.text('Date columns found: {}'.format(date_cols))
+    dataframe = dataframe.apply(lambda col: pd.to_datetime(col, errors='ignore')
+                  if col.dtypes == object
+                  else col,
+                  axis=0)
 
-date_index = st.selectbox(
-    'Pick the date index',
-    date_cols)
+    date_cols = [col for col in list(dataframe.columns) if (dataframe[col].dtype == np.dtype('datetime64[ns]'))]
+    st.text('Date columns found: {}'.format(date_cols))
 
-
-forecasting_horizon = int(st.text_input("input the forecasting horizon", 49))
-
-
-options = list(dataframe.columns)
-predictor = st.selectbox(
-    'Pick the predictor column',
-    options)
-
-st.write('You selected:', predictor)
-
-options = ['univariate', 'multivariate']
-mode = st.selectbox(
-    'Select the mode',
-    options)
-
-st.write('You selected:', mode)
+    date_index = st.selectbox(
+        'Pick the date index',
+        date_cols)
 
 
-
-if mode == 'multivariate':
-    available_algos = ['LSTM']
-else:
-    available_algos = ['TCN', 'LSTM', 'Sktime-RandomForest', 'Sktime-KNN', 'Sktime-ThetaForecaster', 'NBeats']
+    forecasting_horizon = int(st.text_input("input the forecasting horizon", 49))
 
 
-if mode == 'multivariate':
-    available_features = list(dataframe.columns)
-    available_features.remove(predictor)
+    options = list(dataframe.columns)
+    predictor = st.selectbox(
+        'Pick the predictor column',
+        options)
 
-    selected_features = st.multiselect(
-        'Selected features',
-         available_features,
-         available_features)
+    st.write('You selected:', predictor)
+
+    options = ['univariate', 'multivariate']
+    mode = st.selectbox(
+        'Select the mode',
+        options)
+
+    st.write('You selected:', mode)
 
 
 
-selected_algos = st.multiselect(
-    'Selected algorithms',
-     available_algos,
-     ['LSTM'])
+    if mode == 'multivariate':
+        available_algos = ['LSTM']
+    else:
+        available_algos = ['TCN', 'LSTM', 'Sktime-RandomForest', 'Sktime-KNN', 'Sktime-ThetaForecaster', 'NBeats']
 
-if predictor:
-    st.line_chart(dataframe[predictor])
+    selected_features = None
 
-if st.button('initiate automl'):
-    initiate_run()
+    if mode == 'multivariate':
+        available_features = list(dataframe.columns)
+        available_features.remove(predictor)
 
+        selected_features = st.multiselect(
+            'Selected features',
+             available_features,
+             available_features)
+
+
+
+    selected_algos = st.multiselect(
+        'Selected algorithms',
+         available_algos,
+         ['LSTM'])
+
+    if predictor:
+        st.line_chart(dataframe[predictor])
+
+    if st.button('initiate automl'):
+        initiate_run(chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon, mode, selected_features, selected_algos)
+
+
+run_ui()
 
 
 
