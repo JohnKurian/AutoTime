@@ -128,8 +128,34 @@ def initiate_run(exp_id, chart_data, chart, results, my_slot1, my_slot2, dataset
     # trials = MongoTrials('mongodb://root:7dc41992@cluster0-shard-00-02.vckj9.mongodb.net:27017/main/jobs?retryWrites=true&w=majority', exp_key='trail1')
     # trials = MongoTrials('mongo://localhost:27017/main/jobs', exp_key='trail1')
 
-    trials = Trials()
-    best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000)
+    import os.path
+    import pymongo
+
+    client = pymongo.MongoClient(
+        "mongodb+srv://root:7dc41992@cluster0.vckj9.mongodb.net/main?retryWrites=true&w=majority")
+
+    experiment = list(client.automl.experiments.find({'exp_id': {'$eq': exp_id}}))[0]
+
+    import gridfs
+
+    fs = gridfs.GridFSBucket(client.automl)
+
+    if 'trials_file_id' in experiment:
+        trials_file_id = experiment['trials_file_id']
+
+        file = open('trials.txt', 'wb+')
+
+        fs.download_to_stream(trials_file_id, file)
+        file.seek(0)
+        file.close()
+
+        print('loading from trials save file..')
+        trials = pickle.load(open("trials.txt", "rb"))
+
+    else:
+        trials = Trials()
+
+    best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000, trials_save_file='trials.txt')
 
     # if Trials:
     #     print('here')
@@ -246,6 +272,21 @@ def run_pipeline(cfg, data):
     np.vstack((y_test,y_pred)).T,
     columns = ['y_test', 'y_pred'])
     my_slot2.line_chart(chart_data)
+
+    import gridfs
+
+    fs = gridfs.GridFSBucket(client.automl)
+    # fs.get('5ffe4c4b0bff9f6f25f1b0c1')
+    # print(fs.)
+
+    import os.path
+
+    if os.path.isfile('trials.txt'):
+        file_id = fs.upload_from_stream("trials_obj", open(r'trials.txt', 'rb'))
+        print(file_id)
+
+        db.experiments.update({'exp_id': {'$eq': '7f8608e2-14c6-4071-864c-9ae5306324fd'}},
+                                         {'$set': {'trials_file_id': file_id}})
 
     return rmse
 
@@ -401,19 +442,19 @@ def run_ui():
 
         pipeline = [
             {
-                '$match': {'fullDocument.exp_id': "7f8608e2-14c6-4071-864c-9ae5306324fd"}
+                '$match': {'fullDocument.exp_id': session_state.exp_id}
             }]
 
         runs = []
         r2_scores = []
 
-        for run in client.automl.runs.find({}):
+        for run in client.automl.runs.find({'exp_id': { '$eq': session_state.exp_id } }):
             run = json.loads(dumps(run))
             r2_scores.append(run['r2'])
             runs.append(json.loads(dumps(run)))
         chart.add_rows(r2_scores)
 
-        print(runs)
+        # print(runs)
 
         # change_stream = client.automl.runs.watch(pipeline)
         # for change in change_stream:

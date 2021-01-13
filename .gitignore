@@ -7,3 +7,4 @@
 /notebooks/daily-min-temps.csv
 /mlruns/*
 /debug.log
+/trials.txt
