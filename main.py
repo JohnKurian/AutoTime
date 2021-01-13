@@ -15,21 +15,7 @@ import SessionState
 
 from datetime import datetime
 
-results = {
-    'best_r2': 0
-}
 
-
-dataset_location = ''
-predictor = ''
-
-chart_data = pd.DataFrame(columns=['r2'])
-chart = st.line_chart()
-
-my_slot1 = st.empty()
-
-
-my_slot2 = st.empty()
 
 
 
@@ -50,7 +36,7 @@ my_slot2 = st.empty()
 # hip.Experiment.from_iterable(data).display_st()
 
 
-def initiate_run(exp_id, chart_data, chart, results, my_slot1, dataset_name, predictor, forecasting_horizon, mode, selected_features, selected_algos):
+def initiate_run(exp_id, chart_data, chart, results, my_slot1, my_slot2, dataset_name, predictor, forecasting_horizon, mode, selected_features, selected_algos):
 
     import math
     from hyperopt import fmin, tpe, hp, Trials
@@ -127,6 +113,7 @@ def initiate_run(exp_id, chart_data, chart, results, my_slot1, dataset_name, pre
         'chart': chart,
         'results': results,
         'my_slot1': my_slot1,
+        'my_slot2': my_slot2,
         'dataset_name': dataset_name,
         'predictor': predictor,
         'forecasting_horizon': forecasting_horizon,
@@ -169,6 +156,7 @@ def run_pipeline(cfg, data):
     chart = data['chart']
     results = data['results']
     my_slot1 = data['my_slot1']
+    my_slot2 = data['my_slot2']
     dataset_name = data['dataset_name']
     predictor = data['predictor']
     forecasting_horizon = data['forecasting_horizon']
@@ -213,21 +201,7 @@ def run_pipeline(cfg, data):
 
     print('here:', r2)
 
-    if r2 > best_r2:
-        best_r2 = r2
-        results['best_r2'] = r2
-        results['best_params'] = cfg
-        my_slot1.text(results)
 
-        print(np.vstack((y_test,y_pred)).T.shape)
-
-
-
-
-        chart_data = pd.DataFrame(
-        np.vstack((y_test,y_pred)).T,
-        columns = ['y_test', 'y_pred'])
-        my_slot2.line_chart(chart_data)
 
 
     if r2 > 0:
@@ -250,6 +224,29 @@ def run_pipeline(cfg, data):
                         'dataset_name': dataset_name,
                         'created_at': datetime.utcnow()})
 
+    best_config = None
+    for run in client.automl.runs.find({'exp_id': {'$eq': exp_id}}).sort(
+            [("r2", pymongo.DESCENDING)]):
+        best_config = run
+        break
+
+    results['best_r2'] = best_config['r2']
+    results['best_params'] = best_config['config']
+    my_slot1.text(results)
+
+    y_test = best_config['y_test']
+    y_pred = best_config['y_pred']
+
+    print(np.vstack((y_test,y_pred)).T.shape)
+
+
+
+
+    chart_data = pd.DataFrame(
+    np.vstack((y_test,y_pred)).T,
+    columns = ['y_test', 'y_pred'])
+    my_slot2.line_chart(chart_data)
+
     return rmse
 
 # uploaded_file = st.file_uploader("Upload the dataset")
@@ -265,6 +262,11 @@ def run_ui():
                                      choose_experiment='',
                                      exp_id=None,
                                      new_exp_name='',
+                                     predictor='',
+                                     forecasting_horizon='',
+                                     selected_features=[],
+                                     selected_algos=[],
+                                     mode='',
                                      button_sent=False)
 
     client = pymongo.MongoClient(
@@ -273,12 +275,12 @@ def run_ui():
     db = client.automl
 
     choices = ['create new experiment', 'choose from existing experiment']
-    choose_experiment = st.selectbox(
+    session_state.choose_experiment = st.selectbox(
         'Experiment selection',
         choices)
 
 
-    if choose_experiment == 'create new experiment':
+    if session_state.choose_experiment == 'create new experiment':
         new_exp_name = st.text_input("experiment name", 'automl-exp')
 
 
@@ -308,7 +310,7 @@ def run_ui():
             st.text('the seleced experiment is {}'.format(session_state.exp_id))
 
 
-
+    import os
     datasets = os.listdir('datasets')
     dataset = st.selectbox(
         'Pick the dataset',
@@ -332,37 +334,36 @@ def run_ui():
         date_cols)
 
 
-    forecasting_horizon = int(st.text_input("input the forecasting horizon", 49))
+    session_state.forecasting_horizon = int(st.text_input("input the forecasting horizon", 49))
 
 
     options = list(dataframe.columns)
-    predictor = st.selectbox(
+    session_state.predictor = st.selectbox(
         'Pick the predictor column',
         options)
 
-    st.write('You selected:', predictor)
+    st.write('You selected:', session_state.predictor)
 
     options = ['univariate', 'multivariate']
-    mode = st.selectbox(
+    session_state.mode = st.selectbox(
         'Select the mode',
         options)
 
-    st.write('You selected:', mode)
+    st.write('You selected:', session_state.mode)
 
 
 
-    if mode == 'multivariate':
+    if session_state.mode == 'multivariate':
         available_algos = ['LSTM']
     else:
         available_algos = ['TCN', 'LSTM', 'Sktime-RandomForest', 'Sktime-KNN', 'Sktime-ThetaForecaster', 'NBeats']
 
-    selected_features = None
 
-    if mode == 'multivariate':
+    if session_state.mode == 'multivariate':
         available_features = list(dataframe.columns)
-        available_features.remove(predictor)
+        available_features.remove(session_state.predictor)
 
-        selected_features = st.multiselect(
+        session_state.selected_features = st.multiselect(
             'Selected features',
              available_features,
              available_features)
@@ -374,11 +375,67 @@ def run_ui():
          available_algos,
          ['LSTM'])
 
-    if predictor:
-        st.line_chart(dataframe[predictor])
+    if session_state.predictor:
+        st.line_chart(dataframe[session_state.predictor])
 
     if st.button('initiate automl'):
-        initiate_run(session_state.exp_id, chart_data, chart, results, my_slot1, dataset_name, predictor, forecasting_horizon, mode, selected_features, selected_algos)
+        results = {
+            'best_r2': 0
+        }
+
+
+        chart_data = pd.DataFrame(columns=['r2'])
+        chart = st.line_chart()
+
+        my_slot1 = st.empty()
+
+        my_slot2 = st.empty()
+
+        import os
+        import pymongo
+        from bson.json_util import dumps
+        import json
+
+        client = pymongo.MongoClient(
+            "mongodb+srv://root:7dc41992@cluster0.vckj9.mongodb.net/main?retryWrites=true&w=majority")
+
+        pipeline = [
+            {
+                '$match': {'fullDocument.exp_id': "7f8608e2-14c6-4071-864c-9ae5306324fd"}
+            }]
+
+        runs = []
+        r2_scores = []
+
+        for run in client.automl.runs.find({}):
+            run = json.loads(dumps(run))
+            r2_scores.append(run['r2'])
+            runs.append(json.loads(dumps(run)))
+        chart.add_rows(r2_scores)
+
+        print(runs)
+
+        # change_stream = client.automl.runs.watch(pipeline)
+        # for change in change_stream:
+        #     run = json.loads(dumps(change))['fullDocument']
+        #     r2_scores.append(run['r2'])
+        #     chart.add_rows([run['r2']])
+        #     print(json.loads(dumps(change))['fullDocument'])
+        #     print('')  # for readability only
+
+        if session_state.choose_experiment == 'choose from existing experiment':
+            pass
+
+            # chart_data = pd.DataFrame(
+            #     np.vstack((y_test, y_pred)).T,
+            #     columns=['y_test', 'y_pred'])
+            # my_slot2.line_chart(chart_data)
+
+
+
+
+
+        initiate_run(session_state.exp_id, chart_data, chart, results, my_slot1, my_slot2, dataset_name, session_state.predictor, session_state.forecasting_horizon, session_state.mode, session_state.selected_features, selected_algos)
 
 
 run_ui()
