@@ -153,6 +153,8 @@ def initiate_run(exp_id, chart_data, chart, results, my_slot1, my_slot2, dataset
         trials = pickle.load(open("trials.txt", "rb"))
 
     else:
+        if os.path.isfile('trials.txt'):
+            os.remove('trials.txt')
         trials = Trials()
 
     best = fmin(fmin_objective, space, trials=trials, algo=tpe.suggest, max_evals=10000, trials_save_file='trials.txt')
@@ -196,6 +198,29 @@ def run_pipeline(cfg, data):
     # global mode, selected_features
     print('#####', cfg)
 
+    import gridfs
+
+    import pymongo
+
+    client = pymongo.MongoClient(
+        "mongodb+srv://root:7dc41992@cluster0.vckj9.mongodb.net/main?retryWrites=true&w=majority")
+
+    db = client.automl
+
+    fs = gridfs.GridFSBucket(client.automl)
+    # fs.get('5ffe4c4b0bff9f6f25f1b0c1')
+    # print(fs.)
+
+    import os.path
+
+    if os.path.isfile('trials.txt'):
+        file_id = fs.upload_from_stream("trials_obj", open(r'trials.txt', 'rb'))
+        print(file_id)
+
+        db.experiments.update({'exp_id': {'$eq': exp_id}},
+                                         {'$set': {'trials_file_id': file_id}})
+
+
 
 
     cfg = cfg['algo']
@@ -235,12 +260,7 @@ def run_pipeline(cfg, data):
     # mlflow.log_metric("r2", r2)
     # mlflow.log_artifact('trials.txt')
 
-    import pymongo
 
-    client = pymongo.MongoClient(
-        "mongodb+srv://root:7dc41992@cluster0.vckj9.mongodb.net/main?retryWrites=true&w=majority")
-
-    db = client.automl
     db.runs.insert_one({'exp_id': exp_id,
                         'config': cfg,
                         'r2': r2,
@@ -273,20 +293,6 @@ def run_pipeline(cfg, data):
     columns = ['y_test', 'y_pred'])
     my_slot2.line_chart(chart_data)
 
-    import gridfs
-
-    fs = gridfs.GridFSBucket(client.automl)
-    # fs.get('5ffe4c4b0bff9f6f25f1b0c1')
-    # print(fs.)
-
-    import os.path
-
-    if os.path.isfile('trials.txt'):
-        file_id = fs.upload_from_stream("trials_obj", open(r'trials.txt', 'rb'))
-        print(file_id)
-
-        db.experiments.update({'exp_id': {'$eq': '7f8608e2-14c6-4071-864c-9ae5306324fd'}},
-                                         {'$set': {'trials_file_id': file_id}})
 
     return rmse
 
