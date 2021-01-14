@@ -233,17 +233,17 @@ def run_pipeline(cfg, data):
 
     if mode == 'univariate':
         if cfg['algo'] == 'sk_random_forest':
-            r2, rmse, y_test, y_pred = rf_regression(dataset_name, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = rf_regression(dataset_name, predictor, forecasting_horizon, cfg, exp_id)
         elif cfg['algo'] == 'sk_knn':
-            r2, rmse, y_test, y_pred = kn_regression(dataset_name, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = kn_regression(dataset_name, predictor, forecasting_horizon, cfg, exp_id)
         elif cfg['algo'] == 'theta_forecaster':
-            r2, rmse, y_test, y_pred = theta_forecaster(dataset_name, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = theta_forecaster(dataset_name, predictor, forecasting_horizon, cfg, exp_id)
         elif cfg['algo'] == 'lstm':
-            r2, rmse, y_test, y_pred = lstm_model(dataset_name, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = lstm_model(dataset_name, predictor, forecasting_horizon, cfg, exp_id)
         elif cfg['algo'] == 'tcn':
-            r2, rmse, y_test, y_pred = temporal_convolutional_network(dataset_name, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = temporal_convolutional_network(dataset_name, predictor, forecasting_horizon, cfg, exp_id)
         elif cfg['algo'] == 'nbeats':
-            r2, rmse, y_test, y_pred = nbeats_model(dataset_name, predictor, forecasting_horizon, cfg)
+            r2, rmse, y_test, y_pred = nbeats_model(dataset_name, predictor, forecasting_horizon, cfg, exp_id)
 
     else:
         if cfg['algo'] == 'lstm':

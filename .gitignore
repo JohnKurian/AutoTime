@@ -8,3 +8,5 @@
 /mlruns/*
 /debug.log
 /trials.txt
+/models/
+/notebooks/tcn_weights.h5

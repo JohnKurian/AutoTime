@@ -45,9 +45,10 @@ def split_sequences_multivariate(sequences, n_steps_in, n_steps_out):
     return array(X), array(y)
 
 
-def lstm_model(dataset_location, predictor, forecasting_horizon, cfg):
+def lstm_model(dataset_location, predictor, forecasting_horizon, cfg, exp_id):
     df = pd.read_csv(dataset_location)
     raw_seq = list(df[predictor].values)
+    min_raw_seq, ptp_raw_seq = np.min(raw_seq), np.ptp(raw_seq)
     raw_seq = (raw_seq - np.min(raw_seq)) / np.ptp(raw_seq)
     df[predictor] = raw_seq
 
@@ -83,6 +84,25 @@ def lstm_model(dataset_location, predictor, forecasting_horizon, cfg):
 
     # fit model
     model.fit(X, y, epochs=20, verbose=1)
+
+    # model.save('models/lstm_model.h5')
+
+    import os
+
+    filename = "models/" + exp_id + "/lstm_model/"
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    model.save_weights("models/" + exp_id + "/lstm_model/model_weights.h5")
+    print("Saved model to disk")
+
+    import json
+
+    config = cfg
+    config['forecasting_horizon'] = forecasting_horizon
+    config['min_raw_seq'] = min_raw_seq
+    config['ptp_raw_seq'] = ptp_raw_seq
+
+    with open("models/" + exp_id + '/lstm_model/config.json', 'w') as f:
+        json.dump(config, f)
 
     # demonstrate prediction
     x_input = X[-1]

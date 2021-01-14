@@ -45,7 +45,7 @@ def load_data(dataset_location, predictor, forecasting_horizon):
 
 
 
-def rf_regression(dataset_location, predictor, forecasting_horizon, cfg):
+def rf_regression(dataset_location, predictor, forecasting_horizon, cfg, exp_id):
     y_train, y_test, fh = load_data(dataset_location, predictor, forecasting_horizon)
     np.random.seed(1)
     regressor = RandomForestRegressor()
@@ -59,7 +59,7 @@ def rf_regression(dataset_location, predictor, forecasting_horizon, cfg):
 
 
 
-def kn_regression(dataset_location, predictor, forecasting_horizon, cfg):
+def kn_regression(dataset_location, predictor, forecasting_horizon, cfg, exp_id):
     y_train, y_test, fh = load_data(dataset_location, predictor, forecasting_horizon)
     np.random.seed(1)
     regressor = KNeighborsRegressor(n_neighbors=cfg["neighbours"])
@@ -74,7 +74,7 @@ def kn_regression(dataset_location, predictor, forecasting_horizon, cfg):
     return r2, rmse, y_test, y_pred
 
 
-def theta_forecaster(dataset_location, predictor, forecasting_horizon, cfg):
+def theta_forecaster(dataset_location, predictor, forecasting_horizon, cfg, exp_id):
     y_train, y_test, fh = load_data(dataset_location, predictor, forecasting_horizon)
     np.random.seed(1)
     forecaster = ThetaForecaster(sp=cfg['sp'])  # monthly seasonal periodicity

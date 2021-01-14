@@ -21,7 +21,7 @@ def load_nbeats_data(dataset_location, predictor):
     data = data.reshape(-1, 1)
     return data
 
-def nbeats_model(dataset_location, predictor, forecasting_horizon, cfg):
+def nbeats_model(dataset_location, predictor, forecasting_horizon, cfg, exp_id):
     data = load_nbeats_data(dataset_location, predictor)
     model = NBeats(data=data, period_to_forecast=forecasting_horizon)
     model.fit()

@@ -37,10 +37,30 @@ def split_sequences(sequences, n_steps_in, n_steps_out):
     return array(X), array(y)
 
 
-def temporal_convolutional_network(dataset_location, predictor, forecasting_horizon, cfg):
+from numpy.lib.stride_tricks import as_strided
+
+
+def rolling_window(a, window_size):
+    shape = (a.shape[0] - window_size + 1, window_size) + a.shape[1:]
+    strides = (a.strides[0],) + a.strides
+    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
+
+
+def temporal_convolutional_network(dataset_location, predictor, forecasting_horizon, cfg, exp_id):
+
     df = pd.read_csv(dataset_location)
     raw_seq = list(df[predictor].values)
+
+    min_raw_seq, ptp_raw_seq = np.min(raw_seq), np.ptp(raw_seq)
     raw_seq = (raw_seq - np.min(raw_seq)) / np.ptp(raw_seq)
+
+
+    ######################################################################
+    ######################################################################
+    ######################################################################
+    ######## Ignored code
+
     df[predictor] = raw_seq
     df = lag_days(df[predictor], cfg['lag_days'])
     cols = list(df.columns)
@@ -58,6 +78,33 @@ def temporal_convolutional_network(dataset_location, predictor, forecasting_hori
     x = np.asarray(x).astype('float32')
     y = np.asarray(y).astype('float32')
 
+    ######################################################################
+    ######################################################################
+    ######################################################################
+
+    lag_1 = cfg['lag_days']
+    lag_2 = cfg['lag_days']
+
+    x = rolling_window(raw_seq, lag_1)[:-forecasting_horizon]
+    y = rolling_window(raw_seq, forecasting_horizon)[lag_1:]
+
+    xi = []
+    for i in range(x.shape[0]):
+        xi.append(rolling_window(x[i], lag_2))
+
+    x = np.array(xi)
+
+    n_steps_in, n_features = x.shape[1], x.shape[2]
+    n_steps_out = forecasting_horizon
+
+
+    print(n_steps_in, n_features, n_steps_out)
+
+
+
+
+
+
     timesteps = cfg['lag_days']
     batch_size = None
     i = Input(batch_shape=(batch_size, n_steps_in, n_features))
@@ -71,6 +118,25 @@ def temporal_convolutional_network(dataset_location, predictor, forecasting_hori
     tcn_full_summary(m, expand_residual_blocks=False)
 
     m.fit(x, y, epochs=100, validation_split=0.2, shuffle=False, verbose=1)
+
+    # m.save('models/tcn_model.h5')
+
+
+
+    import os, json
+
+    filename = "models/" + exp_id + "/tcn_model/"
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    m.save_weights("models/" + exp_id + "/tcn_model/model_weights.h5")
+    print("Saved model to disk")
+
+    config = cfg
+    config['forecasting_horizon'] = forecasting_horizon
+    config['min_raw_seq'] = min_raw_seq
+    config['ptp_raw_seq'] = ptp_raw_seq
+
+    with open("models/" + exp_id + '/tcn_model/config.json', 'w') as f:
+        json.dump(config, f)
 
 
     # demonstrate prediction
