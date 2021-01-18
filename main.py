@@ -8,7 +8,7 @@ from functools import partial
 
 from machine_learning  import rf_regression, kn_regression, theta_forecaster
 from lstm import lstm_model, multivariate_lstm_model
-from nbeats_model import nbeats_model
+# from nbeats_model import nbeats_model
 from temporal_convolutional_network  import temporal_convolutional_network
 
 import SessionState

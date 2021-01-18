@@ -58,4 +58,14 @@ pipeline = [
 # client.automl.experiments.update({'exp_id': {'$eq': '7f8608e2-14c6-4071-864c-9ae5306324fd'}}, {'$set': {'trials_file_id': '0'}})
 
 
-print(list(client.automl.experiments.find({'exp_id': { '$eq': '7f8608e2-14c6-4071-864c-9ae5306324fd' } }))[0])
+# print(list(client.automl.experiments.find({'exp_id': { '$eq': '7f8608e2-14c6-4071-864c-9ae5306324fd' } }))[0])
+
+print('\n')
+for result in list(client.automl.runs.find({'exp_id': { '$eq': 'ae509fee-d082-488c-b7d8-4bf82475c2ea' } }, {'r2': 1, 'rmse': 1, 'config': 1}).sort([("r2", pymongo.DESCENDING)])):
+    print(result)
+    print('\n')
+
+
+
+# print(list(client.automl.experiments.find({ })))
+

@@ -10,6 +10,18 @@ import numpy as np
 
 from metrics import calculate_metrics
 
+# Currently the ‘memory growth’ option should be the same for all GPUs.
+# You should set the ‘memory growth’ option before initializing GPUs.
+
+import tensorflow as tf
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+  try:
+    for gpu in gpus:
+      tf.config.experimental.set_memory_growth(gpu, True)
+  except RuntimeError as e:
+    print(e)
+
 
 # split a univariate sequence into samples
 def split_sequence(sequence, n_steps_in, n_steps_out):

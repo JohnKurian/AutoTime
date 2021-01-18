@@ -10,3 +10,6 @@
 /trials.txt
 /models/
 /notebooks/tcn_weights.h5
+/outputs/
+/outputs/test.txt
+/mlrun_dir/
