@@ -13,3 +13,5 @@
 /outputs/
 /outputs/test.txt
 /mlrun_dir/
+/mlruns.db
+.idea/*

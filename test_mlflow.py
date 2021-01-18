@@ -15,8 +15,9 @@ from mlflow import log_metric, log_param, log_artifacts
 #
 # #start mlflow
 # run = mlflow.start_run(run_id='dd4a2fcda08649fcbb5b14450c831a60')
-experiment = mlflow.create_experiment('test_experiment_1')
-
+mlflow.set_tracking_uri("http://localhost:5000")
+# experiment = mlflow.create_experiment('test_experiment_2')
+mlflow.set_experiment('test_experiment_3')
 run = mlflow.start_run()
 
 tags = {"engineering": "ML Platform",
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     # Log an artifact (output file)
     if not os.path.exists("outputs"):
         os.makedirs("outputs")
-    with open("outputs/test.txt", "w") as f:
+    with open("outputs/new_test.txt", "w") as f:
         f.write("hello world!")
     log_artifacts("outputs")
     mlflow.end_run()
