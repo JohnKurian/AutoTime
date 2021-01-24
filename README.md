@@ -12,3 +12,18 @@ python -m venv autotime_env
 
 SSL
 pip --proxy http://geo-cluster125184-swg.ibosscloud.com:8082 --cert ca-bundle-with-iboss.pem install streamlit --user
+
+
+Starting the flask backend API for frontend 
+flask run
+
+Starting Autotime frontend
+npm install 
+npm start  
+
+
+Ports: 
+mlflow UI == 3000
+mlflow server == 5000
+flask server == 8000
+autotime frontend == 4000

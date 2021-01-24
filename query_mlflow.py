@@ -38,6 +38,10 @@ for run in client.list_run_infos('1'):
 
 
     # get metrics params and tags for a run
+    print('here')
+
+    run_obj = client.get_run(run.run_id)
+
     print(client.get_run(run.run_id))
     print(client.list_artifacts(run.run_id))
 

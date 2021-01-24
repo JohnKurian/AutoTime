@@ -15,3 +15,4 @@
 /mlrun_dir/
 /mlruns.db
 .idea/*
+/flask-react-app/package-lock.json
