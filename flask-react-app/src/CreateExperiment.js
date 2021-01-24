@@ -22,8 +22,12 @@ class CreateExperiment extends React.Component {
     this.state = {
       originHashtags: '', 
       campaignName: '',
-      experiments: []
+      experiments: [],
+      exp_name: ''
     };
+
+    this.handleChange = this.handleChange.bind(this)
+    this.createExperiment = this.createExperiment.bind(this)
 
   }
 
@@ -40,13 +44,20 @@ class CreateExperiment extends React.Component {
 }
 
 
+handleChange(evt) {
+  this.setState({exp_name: evt.target.value})
+}
 
 
 
 
 
-  getExperiment(experiment_id) {
-    let server_url = 'http://127.0.0.1:8000/get_experiment'
+
+
+  createExperiment(event) {
+    event.preventDefault();
+    console.log(event)
+    let server_url = 'http://127.0.0.1:8000/create_experiment'
 
     const server_headers = {
       'Accept': '*/*',
@@ -61,12 +72,13 @@ class CreateExperiment extends React.Component {
     fetch(server_url,
       {
           headers: server_headers,
-          method: "GET"
+          method: "POST",
+          body: JSON.stringify({'exp_name': this.state.exp_name})
       })
       .then(res=>{ return res.json()})
       .then(data => {
-        this.props.history.push('/experiments/'+experiment_id)
-        document.location.reload()
+        //this.props.history.push('/experiments/'+experiment_id)
+        //document.location.reload()
       })
       .catch(res=> console.log(res))
   
@@ -78,22 +90,10 @@ class CreateExperiment extends React.Component {
    render() {
     return (
       <div>
-         <form>
-          <label>
-              Experiment name:
-              <input type="text" name="name" />
-  
-              <label for="cars">Choose a dataset:</label>
-  
-              <select name="cars" id="cars">
-                <option value="volvo">Volvo</option>
-                <option value="saab">Saab</option>
-                <option value="mercedes">Mercedes</option>
-                <option value="audi">Audi</option>
-              </select>
-          </label>
-          <input onSubmit={this.createExperiment} type="submit" value="Submit" />
-      </form>
+
+              <input type="text" name="name"  value={this.state.exp_name} onChange={this.handleChange}/>
+
+          <buttton onClick={this.createExperiment} >submit</buttton>
   
       </div>
     );

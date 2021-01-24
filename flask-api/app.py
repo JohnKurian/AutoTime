@@ -25,10 +25,13 @@ def say_hello_world():
 
 
 
-@app.route('/create_experiment')
+@app.route('/create_experiment', methods=['POST'])
 def create_experiment():
-    experiment = mlflow.create_experiment('test_experiment_2')
-    return {'result': experiment}
+    print('here')
+    req_data = request.get_json(force=True)
+    print(req_data)
+    experiment = mlflow.create_experiment(req_data['exp_name'])
+    return {'result': ''}
 
 
 
