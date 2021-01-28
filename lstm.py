@@ -95,7 +95,7 @@ def lstm_model(dataset_location, predictor, forecasting_horizon, cfg, exp_id):
     # model.compile(optimizer='adam', loss='mse')
 
     # fit model
-    model.fit(X, y, epochs=20, verbose=1)
+    model.fit(X, y, epochs=2, verbose=0)
 
     # model.save('models/lstm_model.h5')
 
@@ -154,7 +154,7 @@ def multivariate_lstm_model(dataset_location, predictor, selected_features, fore
 
 
     # fit model
-    model.fit(X, y, epochs=5, verbose=1)
+    model.fit(X, y, epochs=5, verbose=0)
 
     # demonstrate prediction
     x_input = X[-1]

@@ -163,7 +163,7 @@ def temporal_convolutional_network(dataset_location, predictor, forecasting_hori
 
     tcn_full_summary(m, expand_residual_blocks=False)
 
-    m.fit(x, y, epochs=100, validation_split=0.2, shuffle=False, verbose=1)
+    m.fit(x, y, epochs=100, validation_split=0.2, shuffle=False, verbose=0)
 
     # m.save('models/tcn_model.h5')
 

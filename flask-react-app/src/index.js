@@ -3,10 +3,14 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import SiderDemo from './SiderDemo';
+
+import { Button, DatePicker, version } from "antd";
+import "antd/dist/antd.css";
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <SiderDemo />
   </React.StrictMode>,
   document.getElementById('root')
 );

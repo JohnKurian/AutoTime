@@ -15,7 +15,7 @@ pip --proxy http://geo-cluster125184-swg.ibosscloud.com:8082 --cert ca-bundle-wi
 
 
 Starting the flask backend API for frontend 
-flask run
+flask run --with-threads
 
 Starting Autotime frontend
 npm install 

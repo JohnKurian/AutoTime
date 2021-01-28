@@ -5,6 +5,7 @@ import Home from './Home.js'
 import CreateExperiment from './CreateExperiment.js'
 import SelectExperiment from './SelectExperiment.js'
 import Experiment from './Experiment.js'
+import Settings from './Settings.js'
 import Run from './Run.js'
 import history from './history';
 
@@ -31,7 +32,7 @@ class App extends Component {
   return (
     <div className="App">
 
-        <Router>
+        
 
         <div>
         {/* A <Switch> looks through its children <Route>s and
@@ -42,10 +43,11 @@ class App extends Component {
           <Route exact path="/experiments" render={() => (<SelectExperiment  {...this.props} history = {history}/>)} />
           <Route exact path="/experiments/:experiment_id" render={() => (<Experiment  {...this.props} history = {history}/>)} />
           <Route exact path="/runs/:run_id" render={() => (<Run  {...this.props} history = {history}/>)} />
+          <Route exact path="/settings" render={() => (<Settings/>)} />
 
         </Switch>
       </div>
-    </Router>
+    
     </div>
   );
           }

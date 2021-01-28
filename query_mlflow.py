@@ -4,6 +4,15 @@ from mlflow.tracking import MlflowClient
 from mlflow.entities import ViewType
 
 mlflow.set_tracking_uri("http://localhost:5000")
+mlclient = MlflowClient()
+
+print(mlclient.get_run('c526b082f55e488fab7234b55ab561d0'))
+
+exp = mlclient.get_experiment('1')
+print(exp.name)
+exit()
+
+
 
 def print_experiment_info(experiments):
     for e in experiments:
@@ -31,14 +40,14 @@ import pdb
 
 # get runs for a particular experiment id
 
-for run in client.list_run_infos('1'):
+for run in client.list_run_infos('0'):
     print(run.start_time, run.end_time)
     print(run.run_id)
     print(run.artifact_uri)
 
 
     # get metrics params and tags for a run
-    print('here')
+    print('hey there here')
 
     run_obj = client.get_run(run.run_id)
 

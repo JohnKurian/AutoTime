@@ -11,6 +11,32 @@ import {
 } from "react-router-dom";
 import { render } from '@testing-library/react';
 
+import {
+  ExperimentOutlined,
+  HomeOutlined ,
+  SettingFilled,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+
+
+import { List, Avatar } from 'antd';
+
+const data = [
+  {
+    title: 'Ant Design Title 1',
+  },
+  {
+    title: 'Ant Design Title 2',
+  },
+  {
+    title: 'Ant Design Title 3',
+  },
+  {
+    title: 'Ant Design Title 4',
+  },
+];
+
 
 class SelectExperiment extends React.Component {
 
@@ -79,8 +105,26 @@ class SelectExperiment extends React.Component {
 
    render() {
   return (
-    <div>
-        {this.state.experiments && this.state.experiments.map(p => <div onClick={() => this.getExperiment(p.experiment_id)}>{p.experiment_id}, {p.name}</div>)}
+    <div style={{'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center'}}>
+       
+
+        <List
+    itemLayout="horizontal"
+    dataSource={this.state.experiments}
+    bordered
+    style={{'width': '500px'}}
+    renderItem={experiment => (
+      <List.Item>
+        <List.Item.Meta
+          avatar={<Avatar src="https://img.icons8.com/wired/64/000000/thin-test-tube.png" />}
+          title={<a href="https://ant.design">{experiment.name}</a>}
+          description={experiment.experiment_id}
+          onClick={() => this.getExperiment(experiment.experiment_id)}
+        />
+      </List.Item>)}
+      />
+
+
     </div>
   )
    }

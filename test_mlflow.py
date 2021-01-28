@@ -15,32 +15,44 @@ from mlflow import log_metric, log_param, log_artifacts
 #
 # #start mlflow
 # run = mlflow.start_run(run_id='dd4a2fcda08649fcbb5b14450c831a60')
+mlclient = mlflow.tracking.MlflowClient()
 mlflow.set_tracking_uri("http://localhost:5000")
 # experiment = mlflow.create_experiment('test_experiment_2')
-mlflow.set_experiment('test_experiment_3')
-run = mlflow.start_run()
+# mlflow.set_experiment('test_experiment_3')
 
-tags = {"engineering": "ML Platform",
-        "release.candidate": "RC1",
-        "release.version": "2.2.0"}
-mlflow.set_tags(tags)
+# mlflow.set_experiment('0')
 
-print(run.info.run_id)
+# run = mlflow.start_run()
+#
+# tags = {"engineering": "ML Platform",
+#         "release.candidate": "RC1",
+#         "release.version": "2.2.0"}
+
+mlclient.set_experiment_tag('0',
+     "mlflow.note.content","this is a custom note")
+
+experiment = mlclient.get_experiment('0')
+print("Name: {}".format(experiment.name))
+print("Tags: {}".format(experiment.tags))
+
+# mlflow.set_tags(tags)
+#
+# print(run.info.run_id)
 
 
-if __name__ == "__main__":
-    # Log a parameter (key-value pair)
-    log_param("param1", randint(0, 100))
-
-    # Log a metric; metrics can be updated throughout the run
-    log_metric("foo", random())
-    log_metric("foo", random() + 1)
-    log_metric("foo", random() + 2)
-
-    # Log an artifact (output file)
-    if not os.path.exists("outputs"):
-        os.makedirs("outputs")
-    with open("outputs/new_test.txt", "w") as f:
-        f.write("hello world!")
-    log_artifacts("outputs")
-    mlflow.end_run()
+# if __name__ == "__main__":
+#     # Log a parameter (key-value pair)
+#     log_param("param1", randint(0, 100))
+#
+#     # Log a metric; metrics can be updated throughout the run
+#     log_metric("foo", random())
+#     log_metric("foo", random() + 1)
+#     log_metric("foo", random() + 2)
+#
+#     # Log an artifact (output file)
+#     if not os.path.exists("outputs"):
+#         os.makedirs("outputs")
+#     with open("outputs/new_test.txt", "w") as f:
+#         f.write("hello world!")
+#     log_artifacts("outputs")
+#     mlflow.end_run()
