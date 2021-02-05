@@ -10,6 +10,7 @@ import {
   SettingFilled,
   TeamOutlined,
   UserOutlined,
+  DatabaseOutlined
 } from '@ant-design/icons';
 
 import {
@@ -21,7 +22,7 @@ import {
   } from "react-router-dom";
 
 import "./siderdemo.css";
-import logo from './abb_logo.png'; // Tell webpack this JS file uses this image
+import logo from './abb_white.png'; // Tell webpack this JS file uses this image
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -43,8 +44,14 @@ class SiderDemo extends React.Component {
     const { collapsed } = this.state;
     return (
         <Router>
-      <Layout style={{ minHeight: '100vh' }}>
-        <Sider collapsible collapsed={collapsed} onCollapse={this.onCollapse}>
+      <Layout style={{ height: '100vh' }}>
+        <Sider 
+        collapsible collapsed={collapsed} 
+        onCollapse={this.onCollapse}
+        style={{ 
+         
+      }}
+        >
           <div className="logo" />
           <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
             <Menu.Item key="1" icon={<HomeOutlined  />}>
@@ -53,14 +60,19 @@ class SiderDemo extends React.Component {
             <Menu.Item key="2" icon={<ExperimentOutlined />}>
             <Link to="/experiments">Experiments</Link>
             </Menu.Item>
-            <Menu.Item key="3" icon={<SettingFilled />}>
+
+            <Menu.Item key="3" icon={<DatabaseOutlined />}>
+            <Link to="/datasets">Datasets</Link>
+            </Menu.Item>
+
+            <Menu.Item key="4" icon={<SettingFilled />}>
             <Link to="/settings">Settings</Link>
             </Menu.Item>
           </Menu>
         </Sider>
         <Layout className="site-layout">
-          <Header className="site-layout-background" style={{ padding: 0 }}><img style={{ 'width': '85px' }} src={logo} alt="Logo" /></Header>
-          <Content style={{ margin: '0 16px' }}>
+          <Header className="site-layout-background" style={{ padding: 0, 'display': 'flex', 'background': '#001529', 'height': '52px' }}><img style={{ 'width': '85px', 'alignItems': 'center', 'alignSelf': 'center' }} src={logo} alt="Logo" /></Header>
+          <Content style={{ margin: '0 16px', overflow: 'scroll'  }}>
             <Breadcrumb style={{ margin: '16px 0' }}>
             </Breadcrumb>
             <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>

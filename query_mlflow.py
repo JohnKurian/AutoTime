@@ -6,10 +6,13 @@ from mlflow.entities import ViewType
 mlflow.set_tracking_uri("http://localhost:5000")
 mlclient = MlflowClient()
 
-print(mlclient.get_run('c526b082f55e488fab7234b55ab561d0'))
+# print(mlclient.get_run('c526b082f55e488fab7234b55ab561d0'))
 
-exp = mlclient.get_experiment('1')
-print(exp.name)
+# new_experiment = mlflow.create_experiment('blah blah 1')
+# print(new_experiment)
+
+exp = mlclient.get_experiment('19')
+print(exp)
 exit()
 
 

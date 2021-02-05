@@ -55,7 +55,11 @@ def create_experiment():
     experiment = mlflow.create_experiment(req_data['exp_name'])
     client.set_experiment_tag(experiment,"dataset_location", req_data['dataset_location'])
     client.set_experiment_tag(experiment,"notes", req_data['notes'])
-    return {'result': ''}
+    client.set_experiment_tag(experiment, "forecasting_horizon", req_data['forecasting_horizon'])
+    client.set_experiment_tag(experiment, "mode", req_data['mode'])
+    client.set_experiment_tag(experiment, "predictor_column", req_data['predictor_column'])
+    client.set_experiment_tag(experiment, "selected_algos", req_data['selected_algos'])
+    return {'experiment_id': experiment}
 
 
 @app.route('/start_run')
@@ -72,17 +76,44 @@ def threaded_function(arg):
         print("running")
         sleep(1)
 
-def run_mlflow_parallel(exp_name):
+def run_mlflow_parallel(exp_name, experiment_id):
     # do something
     mlflow.set_experiment(exp_name)
-    with mlflow.start_run() as run:
-        initiate_run(exp_name,
-                     'datasets/daily-min-temperatures-australia.csv',
-                     'Temp',
-                     49,
-                     'univariate',
-                     ['Temp'],
-                     ['TCN', 'LSTM'])
+    exp = client.get_experiment(experiment_id)
+    dataset_location = 'datasets/' + exp.tags['dataset_location']
+
+    forecasting_horizon = int(exp.tags['forecasting_horizon'])
+    mode = exp.tags['mode']
+    predictor_column = exp.tags['predictor_column']
+    selected_algos = exp.tags['selected_algos']
+
+    import ast
+    selected_algos = ast.literal_eval(selected_algos)
+
+    active_run = mlflow.active_run()
+    if active_run is None:
+        with mlflow.start_run() as run:
+            initiate_run(exp_name,
+                         dataset_location,
+                         predictor_column,
+                        forecasting_horizon,
+                         mode,
+                         [predictor_column],
+                         selected_algos)
+    else:
+        print('ending previous run')
+        mlflow.end_run()
+        print('starting new run')
+        with mlflow.start_run() as run:
+            initiate_run(exp_name,
+                         dataset_location,
+                         predictor_column,
+                        forecasting_horizon,
+                         mode,
+                         [predictor_column],
+                         selected_algos)
+
+
 
 
 from multiprocessing.pool import ThreadPool
@@ -94,9 +125,9 @@ def create_run():
     exp = client.get_experiment(experiment_id)
     exp_name = exp.name
 
-
-    thread = Thread(target = run_mlflow_parallel, args = (exp_name, ))
-    thread.start()
+    run_mlflow_parallel(exp_name, experiment_id)
+    # thread = Thread(target = run_mlflow_parallel, args = (exp_name, experiment_id ))
+    # thread.start()
 
     # pool = ThreadPool(processes=100)
     # pool.map(run_mlflow_parallel, [exp_name])
@@ -119,6 +150,32 @@ def get_runs():
 
     return {'result': runs}
 
+
+
+
+
+@app.route('/datasets')
+def get_datasets():
+    datasets = os.listdir('datasets')
+    return {'datasets': datasets}
+
+import pandas as pd
+
+@app.route('/datasets/info')
+def get_dataset_info():
+    data = request.args.get('data')
+    df = pd.read_csv('datasets/'+data)
+
+    dataset_columns = list(df.columns)
+
+    return {'dataset_columns': dataset_columns}
+
+
+@app.route('/dataset/upload', methods = ['POST'])
+def upload_file():
+    file = request.files['file']
+    print(file)
+    return "done"
 
 
 @app.route('/runs')
