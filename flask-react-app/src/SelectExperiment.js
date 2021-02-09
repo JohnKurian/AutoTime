@@ -74,7 +74,7 @@ class SelectExperiment extends React.Component {
 
 
   getExperiment(experiment_id) {
-    let server_url = 'http://127.0.0.1:8000/get_experiment'
+    let server_url = 'http://127.0.0.1:8000/get_experiment?experiment_id='+experiment_id
 
     const server_headers = {
       'Accept': '*/*',

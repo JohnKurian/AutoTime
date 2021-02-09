@@ -41,6 +41,20 @@ client = MlflowClient()
 app = Flask(__name__)
 CORS(app)
 
+
+def print_metric_info(history):
+    r2_values = []
+    for m in history:
+        print("name: {}".format(m.key))
+        print("value: {}".format(m.value))
+        print("step: {}".format(m.step))
+        print("timestamp: {}".format(m.timestamp))
+        print("--")
+        r2_values.append(m.value)
+    return r2_values
+
+
+
 @app.route('/hello')
 def say_hello_world():
     return {'result': "Hello World"}
@@ -92,26 +106,26 @@ def run_mlflow_parallel(exp_name, experiment_id):
 
     active_run = mlflow.active_run()
     if active_run is None:
-        with mlflow.start_run() as run:
-            initiate_run(exp_name,
-                         dataset_location,
-                         predictor_column,
-                        forecasting_horizon,
-                         mode,
-                         [predictor_column],
-                         selected_algos)
+        # with mlflow.start_run() as run:
+        initiate_run(exp_name,
+                     dataset_location,
+                     predictor_column,
+                    forecasting_horizon,
+                     mode,
+                     [predictor_column],
+                     selected_algos)
     else:
         print('ending previous run')
         mlflow.end_run()
         print('starting new run')
-        with mlflow.start_run() as run:
-            initiate_run(exp_name,
-                         dataset_location,
-                         predictor_column,
-                        forecasting_horizon,
-                         mode,
-                         [predictor_column],
-                         selected_algos)
+        # with mlflow.start_run() as run:
+        initiate_run(exp_name,
+                     dataset_location,
+                     predictor_column,
+                    forecasting_horizon,
+                     mode,
+                     [predictor_column],
+                     selected_algos)
 
 
 
@@ -138,7 +152,81 @@ def create_run():
 
 @app.route('/get_experiment')
 def get_experiment():
-    return {'result': "Hello experiment"}
+    experiment_id = request.args.get('experiment_id')
+    exp = client.get_experiment(experiment_id)
+
+    payload = {}
+
+    payload['experiment_id'] = exp.experiment_id
+    payload['lifecycle_stage'] = exp.lifecycle_stage
+    payload['name'] = exp.name
+    payload['dataset_location'] = exp.tags['dataset_location']
+    payload['forecasting_horizon'] = exp.tags['forecasting_horizon']
+    payload['mode'] = exp.tags['mode']
+    payload['notes'] = exp.tags['notes']
+    payload['predictor_column'] = exp.tags['predictor_column']
+    payload['selected_algos'] = exp.tags['selected_algos']
+
+    best_run = MlflowClient().search_runs(
+        experiment_ids=exp.experiment_id,
+        filter_string="",
+        run_view_type=ViewType.ALL,
+        max_results=1,
+        order_by=["metrics.r2 DESC"]
+    )
+
+    if len(best_run) > 0:
+
+        all_runs = MlflowClient().search_runs(
+            experiment_ids=['28'],
+            filter_string="",
+            run_view_type=ViewType.ALL
+        )
+
+        all_r2 = [run.data.metrics['r2'] for run in all_runs]
+        payload['all_r2'] = all_r2
+
+        best_run = best_run[0]
+        try:
+            if best_run.data.metrics['model_LSTM'] == 1:
+                payload['model'] = 'LSTM'
+                payload['hidden_layer_1_neurons'] = best_run.data.metrics['hidden_layer_1_neurons']
+                payload['hidden_layer_2_neurons'] = best_run.data.metrics['hidden_layer_2_neurons']
+                payload['n_steps_in'] = best_run.data.metrics['n_steps_in']
+
+
+            elif best_run.data.metrics['model_TCN'] == 1:
+                payload['model'] = 'TCN'
+                payload['lag_days'] = best_run.data.metrics['lag_days']
+        except KeyError:
+            pass
+
+        payload['r2'] = best_run.data.metrics['r2']
+        payload['best_run_id'] = best_run.info.run_id
+
+        runs = mlflow.search_runs(experiment_ids=experiment_id)
+        cols = list(runs.columns)
+        selected_cols = ['metrics.hidden_layer_1_neurons', 'metrics.n_steps_in', 'metrics.model_TCN',
+                         'metrics.model_LSTM', 'metrics.hidden_layer_2_neurons', 'metrics.r2', 'metrics.lag_days']
+        cols = selected_cols
+        runs = runs[cols]
+        key_list = list(range(1,len(runs)+1))
+        runs['key'] = key_list
+        cols_json = [{'title': col, 'dataIndex': col, 'key': col} for col in cols]
+        data_source = runs.to_json(orient="records")
+
+        payload['data_columns'] = cols_json
+
+        import json
+
+        payload['datasource'] = json.loads(data_source)
+
+
+
+
+
+
+    return {'payload': payload}
 
 
 
@@ -201,6 +289,6 @@ def get_run():
 def experiments():
     exps = [{'experiment_id': e.experiment_id,
              'name': e.name}
-            for e in client.list_experiments(view_type=ViewType.ALL)]
+            for e in client.list_experiments(view_type=ViewType.ACTIVE_ONLY)]
 
     return {'result': exps}

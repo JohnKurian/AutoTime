@@ -27,3 +27,4 @@ mlflow UI == 3000
 mlflow server == 5000
 flask server == 8000
 autotime frontend == 4000
+model server == 8080

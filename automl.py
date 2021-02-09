@@ -125,7 +125,13 @@ def initiate_run(exp_id,
 
     # fmin_objective = partial(run_pipeline, chart_data, chart, results, my_slot1, dataset_location, predictor, forecasting_horizon, mode, selected_features)
 
-    fmin_objective = partial(run_pipeline, data=data)
+    def run_mlflow(cfg, data):
+        active_run = mlflow.active_run()
+        rmse = run_pipeline(cfg, data)
+        mlflow.end_run()
+        return rmse
+
+    fmin_objective = partial(run_mlflow, data=data)
 
     # trials = MongoTrials('mongodb://root:7dc41992@cluster0-shard-00-02.vckj9.mongodb.net:27017/main/jobs?retryWrites=true&w=majority', exp_key='trail1')
     # trials = MongoTrials('mongo://localhost:27017/main/jobs', exp_key='trail1')
@@ -246,6 +252,23 @@ def run_pipeline(cfg, data):
 
 
     mlflow.log_metric("r2", r2)
+
+
+    if cfg['algo'] == 'tcn':
+        mlflow.log_metric("model_TCN", 1)
+        mlflow.log_metric("model_LSTM", 0)
+        mlflow.log_metric("lag_days", cfg['lag_days'])
+
+    elif  cfg['algo'] == 'lstm':
+        mlflow.log_metric("model_LSTM", 1)
+        mlflow.log_metric("model_TCN", 0)
+        mlflow.log_metric("hidden_layer_1_neurons", cfg['hidden_layer_1_neurons'])
+        mlflow.log_metric("hidden_layer_2_neurons", cfg['hidden_layer_2_neurons'])
+        mlflow.log_metric("n_steps_in", cfg['n_steps_in'])
+
+
+    # mlflow.log_param("y_test", y_test.tolist())
+    # mlflow.log_param("y_pred", y_pred.tolist())
     mlflow.log_artifact('trials.txt')
 
 
