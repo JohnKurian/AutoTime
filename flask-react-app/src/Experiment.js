@@ -173,7 +173,7 @@ getRun(run_id) {
     </SyntaxHighlighter>
     </div>
           <a target="_blank" rel="noopener noreferrer" href="http://localhost:8080/docs">
-          <Button style={{'marginRight': '25px'}} type="primary" onClick={this.startRun} icon={<RocketOutlined />}>Test model</Button>
+          <Button style={{'marginRight': '25px'}} type="primary" onClick={() => {}} icon={<RocketOutlined />}>Test model</Button>
           </a>
          </div>
 
@@ -238,8 +238,7 @@ getRun(run_id) {
 
       <div style={{'display': 'flex', 'flex': 2}}>
 
-      <Table scroll={{ x: 'max-content' }} style ={{'width': '700px', 'marginTop': '100px'}} columns={this.state.exp_details['data_columns']} dataSource={this.state.exp_details['datasource']} />
-
+      
       </div>
 
     </div>
@@ -254,6 +253,9 @@ getRun(run_id) {
   )
    }
 }
+
+//<Table scroll={{ x: 'max-content' }} style ={{'width': '700px', 'marginTop': '100px'}} columns={this.state.exp_details['data_columns']} dataSource={this.state.exp_details['datasource']} />
+
 
 
 

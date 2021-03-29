@@ -18,6 +18,7 @@ Starting the flask backend API for frontend
 flask run --with-threads
 
 Starting Autotime frontend
+cd flask-react-app
 npm install 
 npm start  
 

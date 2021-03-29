@@ -54,7 +54,7 @@ class CreateExperiment extends React.Component {
       dataset_columns: [],
       forecasting_horizon: 10,
       selected_algorithms: [],
-      available_algorithms: ['TCN', 'LSTM'],
+      available_algorithms: ['TCN', 'LSTM', 'Sktime-RandomForest', 'Sktime-KNN', 'Sktime-ThetaForecaster', 'NBeats'],
       available_modes: ['univariate', 'multivariate'],
       selected_mode: ['univariate']
     };

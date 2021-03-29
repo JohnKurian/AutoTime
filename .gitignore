@@ -16,3 +16,6 @@
 /mlruns.db
 .idea/*
 /flask-react-app/package-lock.json
+/LaMCTS/.idea/
+/LaMCTS/.gitignore
+/LaMCTS/.idea/

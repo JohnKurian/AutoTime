@@ -34,6 +34,8 @@ mlflow.set_tracking_uri("http://localhost:5000")
 
 client = MlflowClient()
 
+# mlflow.tensorflow.save_model(model, 'tft_model')
+
 
 
 
@@ -69,7 +71,8 @@ def create_experiment():
     experiment = mlflow.create_experiment(req_data['exp_name'])
     client.set_experiment_tag(experiment,"dataset_location", req_data['dataset_location'])
     client.set_experiment_tag(experiment,"notes", req_data['notes'])
-    client.set_experiment_tag(experiment, "forecasting_horizon", req_data['forecasting_horizon'])
+    # client.set_experiment_tag(experiment, "forecasting_horizon", req_data['forecasting_horizon'])
+    client.set_experiment_tag(experiment, "forecasting_horizon", 1)
     client.set_experiment_tag(experiment, "mode", req_data['mode'])
     client.set_experiment_tag(experiment, "predictor_column", req_data['predictor_column'])
     client.set_experiment_tag(experiment, "selected_algos", req_data['selected_algos'])
@@ -186,40 +189,45 @@ def get_experiment():
         all_r2 = [run.data.metrics['r2'] for run in all_runs]
         payload['all_r2'] = all_r2
 
-        best_run = best_run[0]
-        try:
-            if best_run.data.metrics['model_LSTM'] == 1:
-                payload['model'] = 'LSTM'
-                payload['hidden_layer_1_neurons'] = best_run.data.metrics['hidden_layer_1_neurons']
-                payload['hidden_layer_2_neurons'] = best_run.data.metrics['hidden_layer_2_neurons']
-                payload['n_steps_in'] = best_run.data.metrics['n_steps_in']
-
-
-            elif best_run.data.metrics['model_TCN'] == 1:
-                payload['model'] = 'TCN'
-                payload['lag_days'] = best_run.data.metrics['lag_days']
-        except KeyError:
-            pass
-
-        payload['r2'] = best_run.data.metrics['r2']
-        payload['best_run_id'] = best_run.info.run_id
-
-        runs = mlflow.search_runs(experiment_ids=experiment_id)
-        cols = list(runs.columns)
-        selected_cols = ['metrics.hidden_layer_1_neurons', 'metrics.n_steps_in', 'metrics.model_TCN',
-                         'metrics.model_LSTM', 'metrics.hidden_layer_2_neurons', 'metrics.r2', 'metrics.lag_days']
-        cols = selected_cols
-        runs = runs[cols]
-        key_list = list(range(1,len(runs)+1))
-        runs['key'] = key_list
-        cols_json = [{'title': col, 'dataIndex': col, 'key': col} for col in cols]
-        data_source = runs.to_json(orient="records")
-
-        payload['data_columns'] = cols_json
-
-        import json
-
-        payload['datasource'] = json.loads(data_source)
+        # best_run = best_run[0]
+        # try:
+        #     if best_run.data.metrics['model_LSTM'] == 1:
+        #         payload['model'] = 'LSTM'
+        #         payload['hidden_layer_1_neurons'] = best_run.data.metrics['hidden_layer_1_neurons']
+        #         payload['hidden_layer_2_neurons'] = best_run.data.metrics['hidden_layer_2_neurons']
+        #         payload['n_steps_in'] = best_run.data.metrics['n_steps_in']
+        #
+        #
+        #     elif best_run.data.metrics['model_TCN'] == 1:
+        #         payload['model'] = 'TCN'
+        #         payload['lag_days'] = best_run.data.metrics['lag_days']
+        # except KeyError:
+        #     pass
+        #
+        # payload['r2'] = best_run.data.metrics['r2']
+        # payload['best_run_id'] = best_run.info.run_id
+        #
+        # runs = mlflow.search_runs(experiment_ids=experiment_id)
+        # cols = list(runs.columns)
+        # selected_cols = ['metrics.hidden_layer_1_neurons', 'metrics.n_steps_in', 'metrics.model_TCN',
+        #                  'metrics.model_LSTM', 'metrics.hidden_layer_2_neurons', 'metrics.r2', 'metrics.lag_days']
+        # cols = selected_cols
+        # runs = runs[cols]
+        #
+        # runs.columns = ['hl_1_neurons', 'n_steps_in', 'TCN',
+        #                  'LSTM', 'hl_2_neurons', 'r2', 'lag_days']
+        # cols = ['hl_1_neurons', 'n_steps_in', 'TCN',
+        #                  'LSTM', 'hl_2_neurons', 'r2', 'lag_days']
+        # key_list = list(range(1,len(runs)+1))
+        # runs['key'] = key_list
+        # cols_json = [{'title': col, 'dataIndex': col, 'key': col} for col in cols]
+        # data_source = runs.to_json(orient="records")
+        #
+        # payload['data_columns'] = cols_json
+        #
+        # import json
+        #
+        # payload['datasource'] = json.loads(data_source)
 
 
 
