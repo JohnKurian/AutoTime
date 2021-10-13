@@ -1,31 +1,33 @@
-== MLFlow == 
+## BOAT
 
-- Download source from github and replace python library package with source
-- Then, mlflow server
+Source code for the 2021 IEEE BigDataService paper ["BOAT: A Bayesian Optimization AutoML Time-series Framework for Industrial Applications"](https://github.com/JohnKurian/BOAT/blob/main/BOAT.pdf).
+
+## Setting up MLFlow backend
+
+- Download source from github with the folder name "mlflow" at root location
+- Start the server with the following command
+```
 mlflow server --backend-store-uri sqlite:///mlruns.db --default-artifact-root ./mlruns
+```
+- To run the MLFlow UI, in mlflow/server/js, run the following command
+```
+npm start --host 0.0.0.0
+```
 
-- Then npm install to run UI.
-- To run the UI, in mlflow/server/js, npm start --host 0.0.0.0
-
-Creating virtualenv
-python -m venv autotime_env
-
-SSL
-pip --proxy http://geo-cluster125184-swg.ibosscloud.com:8082 --cert ca-bundle-with-iboss.pem install streamlit --user
-
-
-Starting the flask backend API for frontend 
+## Starting the backend
+```
 flask run --with-threads
+```
 
-Starting Autotime frontend
+## Starting BOAT frontend
+```
 cd flask-react-app
-npm install 
 npm start  
+```
 
-
-Ports: 
-mlflow UI == 3000
-mlflow server == 5000
-flask server == 8000
-autotime frontend == 4000
-model server == 8080
+## Ports
+mlflow UI --> 3000
+mlflow server --> 5000
+flask server --> 8000
+BOAT frontend --> 4000
+model server --> 8080
