@@ -1,6 +1,6 @@
 ## BOAT
 
-Source code for the 2021 IEEE BigDataService paper ["BOAT: A Bayesian Optimization AutoML Time-series Framework for Industrial Applications"](https://github.com/JohnKurian/BOAT/blob/main/BOAT.pdf).
+Source code for the 2021 IEEE BigDataService paper ["BOAT: A Bayesian Optimization AutoML Time-series Framework for Industrial Applications"](https://doi.org/10.1109/BigDataService52369.2021.00008).
 
 ## Setting up MLFlow backend
 
